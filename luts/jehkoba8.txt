@@ -1,0 +1,13 @@
+;paint.net Palette File
+;Downloaded from Lospec.com/palette-list
+;Palette Name: Jehkoba8
+;Description: A warm, candle-lit palette restricted to 8 colours (no transparency).&nbsp; Meant for things like early NES graphics with a sepiatone feel.
+;Colors: 8
+FF42333c
+FF9a5552
+FFcd8769
+FFeac378
+FF5c668a
+FF58979d
+FF79d86d
+FFe0f0af

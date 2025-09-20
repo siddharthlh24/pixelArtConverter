@@ -1,0 +1,7 @@
+;paint.net Palette File
+;Downloaded from Lospec.com/palette-list
+;Palette Name: Raz Sandwich
+;Description: A 1bit colour pallet based off of a raspberry jam sandwich&nbsp;
+;Colors: 2
+FF400927
+FFffe1c5

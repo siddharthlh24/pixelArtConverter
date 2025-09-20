@@ -1,0 +1,13 @@
+;paint.net Palette File
+;Downloaded from Lospec.com/palette-list
+;Palette Name: Grotesquely Cute
+;Description: A quirky, purple palette that swings between dark, grotesque tones and light, pastel sweetness.
+;Colors: 8
+FF0d0d0f
+FF1c2141
+FF413f78
+FF64639e
+FF9d90c8
+FFccafd5
+FFc0dbd4
+FFddd9fe
