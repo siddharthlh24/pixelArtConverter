@@ -51,13 +51,25 @@ def make_palette_image(palette):
 def apply_filter(img, palette, use_dither=False, use_outlines=False):
     pal_img = make_palette_image(palette)
     dither_mode = Image.FLOYDSTEINBERG if use_dither else Image.NONE
+    
+    # Quantize to palette
     result = img.convert("RGB").quantize(palette=pal_img, dither=dither_mode).convert("RGB")
+
     if use_outlines:
+        # --- Edge Detection ---
         edges = img.convert("L").filter(ImageFilter.FIND_EDGES)
-        edges = ImageOps.invert(edges).point(lambda x: 0 if x < 128 else 255, mode="1")
-        edges = edges.convert("L")
+
+        # Threshold edges: lower → more lines, higher → fewer
+        edges = edges.point(lambda x: 255 if x > 40 else 0, mode="1")
+
+        # Thicken lines for bold cartoon look
+        edges = edges.filter(ImageFilter.MaxFilter(3))  # 3 = thickness
+
+        # Paste black edges onto the result
         result.paste((0, 0, 0), mask=edges)
+
     return result
+
 
 # --- Serve stored images for preview ---
 @app.route('/uploads/<filename>')
