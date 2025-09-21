@@ -44,8 +44,10 @@
     </p>
 
     <p>
-      <label>Pixel Scale (0.1–1.0):</label>
-      <input type="number" step="0.1" name="pixel_scale" value="{{ request.form.pixel_scale if request.form.get('pixel_scale') else '1.0' }}">
+      <label>Pixel Scale (1–100%): <span id="scale_value">{{ request.form.pixel_scale if request.form.get('pixel_scale') else '100' }}</span>%</label>
+      <input type="range" min="1" max="100" step="1" name="pixel_scale"
+            value="{{ request.form.pixel_scale if request.form.get('pixel_scale') else '100' }}"
+            id="pixel_scale_slider" oninput="document.getElementById('scale_value').innerText = this.value">
     </p>
 
     <p><label><input type="checkbox" name="dither" {% if request.form.get('dither') %}checked{% endif %}> Use Dithering</label></p>

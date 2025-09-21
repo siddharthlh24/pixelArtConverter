@@ -1,6 +1,6 @@
 import os
 import tempfile
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, send_from_directory
 from PIL import Image, ImageOps, ImageFilter
 import io, base64
 
@@ -13,7 +13,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # --- Max upload size ---
-app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50 MB
+app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024  # 1 GB
 
 # --- Palette Loader ---
 def load_palette(file_stream):
@@ -25,8 +25,7 @@ def load_palette(file_stream):
         file_stream.seek(0)
         lines = file_stream.read().decode("iso-8859-1").splitlines()
 
-    hex_pattern = re.compile(r'[0-9A-Fa-f]{6}$')  # Only matches last 6 hex digits
-
+    hex_pattern = re.compile(r'[0-9A-Fa-f]{6}$')
     for line in lines:
         line = line.strip()
         if not line or line.startswith(";"):
@@ -49,7 +48,7 @@ def make_palette_image(palette):
     return pal_img
 
 # --- Apply Filter ---
-def apply_filter(img, palette, pixel_scale=1.0, use_dither=False, use_outlines=False):
+def apply_filter(img, palette, use_dither=False, use_outlines=False):
     pal_img = make_palette_image(palette)
     dither_mode = Image.FLOYDSTEINBERG if use_dither else Image.NONE
     result = img.convert("RGB").quantize(palette=pal_img, dither=dither_mode).convert("RGB")
@@ -60,13 +59,17 @@ def apply_filter(img, palette, pixel_scale=1.0, use_dither=False, use_outlines=F
         result.paste((0, 0, 0), mask=edges)
     return result
 
-# --- Routes ---
+# --- Serve stored images for preview ---
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+# --- Main Route ---
 @app.route("/", methods=["GET", "POST"])
 def index():
     result_img_b64 = None
     download_name = "filtered.png"
     lut_files = [f for f in os.listdir(LUTS_FOLDER) if f.lower().endswith(".txt")]
-
     img = None
     original_filename = None
 
@@ -94,6 +97,12 @@ def index():
                 original_filename = stored_image
 
         if img:
+            # --- Apply pixel scale ---
+            w, h = img.size
+            if scale_factor < 1.0:
+                img = img.resize((int(w * scale_factor), int(h * scale_factor)), Image.NEAREST)
+                img = img.resize((w, h), Image.NEAREST)
+
             # --- Load palette ---
             uploaded_palette = request.files.get("palette")
             selected_lut = request.form.get("lut_select")
@@ -108,14 +117,8 @@ def index():
                 palette = None
 
             if palette:
-                # --- Apply pixel scale ---
-                w, h = img.size
-                if scale_factor < 1.0:
-                    img = img.resize((int(w * scale_factor), int(h * scale_factor)), Image.NEAREST)
-                    img = img.resize((w, h), Image.NEAREST)
-
                 # --- Apply filter ---
-                result = apply_filter(img, palette, pixel_scale=1.0, use_dither=use_dither, use_outlines=use_outlines)
+                result = apply_filter(img, palette, use_dither=use_dither, use_outlines=use_outlines)
 
                 buf = io.BytesIO()
                 result.save(buf, format="PNG")
@@ -130,5 +133,5 @@ def index():
         result_img_b64=result_img_b64,
         download_name=download_name,
         lut_files=lut_files,
-        stored_image=original_filename  # Pass filename to template for reuse
+        stored_image=original_filename  # Pass filename for slider preview
     )
