@@ -21,12 +21,12 @@
       <input type="file" name="image">
     </p>
 
-    {% if original_img_b64 %}
-      <input type="hidden" name="original_img" value="{{ original_img_b64 }}">
-      <input type="hidden" name="original_filename" value="{{ request.form.original_filename if request.form.get('original_filename') else 'filtered.png' }}">
+    {% if stored_image %}
+      <input type="hidden" name="stored_image" value="{{ stored_image }}">
       <p>Current Image:</p>
-      <img class="preview" src="data:image/png;base64,{{ original_img_b64 }}" alt="Original Image">
+      <img class="preview" src="/uploads/{{ stored_image }}" alt="Current Image">
     {% endif %}
+
 
     <p>
       <label>Select LUT from folder:</label>
