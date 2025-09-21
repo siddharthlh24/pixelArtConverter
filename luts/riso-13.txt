@@ -1,0 +1,18 @@
+;paint.net Palette File
+;Downloaded from Lospec.com/palette-list
+;Palette Name: riso 13
+;Description: a vibrant, retro palette with colors selected directly from images of risograph prints.
+;Colors: 13
+FFff5383
+FFea9db5
+FF927581
+FF7b4b57
+FF596676
+FF437a89
+FF7d9783
+FF828f4b
+FFbd9d00
+FFfebe00
+FFff970d
+FFfd5d01
+FFfda98b

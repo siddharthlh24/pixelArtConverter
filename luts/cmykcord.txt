@@ -1,0 +1,22 @@
+;paint.net Palette File
+;Downloaded from Lospec.com/palette-list
+;Palette Name: CMYKcord
+;Description: inspired by the&nbsp;<a href="https://static.beebom.com/wp-content/uploads/2021/08/Ho" target="_blank">Discord and Youtube Premium promotional image</a>, plus my favorite color palette that is a modified CMYK palette. 3 different shades of each color, plus black+white.
+;Colors: 17
+FF000000
+FFffffff
+FF72c6f8
+FF00a1ea
+FF1862a9
+FFff8cc7
+FFd12881
+FFb72b20
+FFa594f7
+FF7064c9
+FF583194
+FFfdec00
+FFf2ad00
+FF784242
+FF6bf432
+FF2aa347
+FF0b6e57

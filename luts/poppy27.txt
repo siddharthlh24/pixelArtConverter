@@ -1,0 +1,32 @@
+;paint.net Palette File
+;Downloaded from Lospec.com/palette-list
+;Palette Name: Poppy27
+;Description: I have no clue what to post right now so here is a palette created on March 9th, 2025. It is a little unbalanced but I don't want to change this any further. Before anyone asks, I forgot the grays.
+;Colors: 27
+FFffffdb
+FFffeea1
+FFff884c
+FFed0047
+FFbf006c
+FF5e045e
+FF170326
+FFcaff85
+FF9dff47
+FF2cf000
+FF00ba3e
+FF006957
+FFade8ff
+FF4fcaff
+FF006fff
+FF0010a3
+FF13036e
+FFffa8e5
+FFff2bf8
+FFb600d6
+FF58008f
+FF340070
+FFfff99e
+FFf7c44d
+FFd67e0b
+FF96390e
+FF5e1414
