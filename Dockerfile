@@ -11,11 +11,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the app source code
 COPY . .
 
-# Copy preexisting LUTs into the container
-COPY luts/ /app/luts/
-
 # Ensure LUT folder exists (for any future LUTs)
 RUN mkdir -p /app/luts
+
+# Copy preexisting LUTs into the container
+COPY luts/ /app/luts/
 
 # Expose port for the webapp
 EXPOSE 5000
