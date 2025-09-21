@@ -1,17 +1,19 @@
+import os
+import tempfile
 from flask import Flask, request, render_template, send_from_directory, url_for
-import os, tempfile
 from PIL import Image, ImageFilter
 
 app = Flask(__name__)
 
+# --- Folders ---
 LUTS_FOLDER = os.path.join(os.path.dirname(__file__), "luts")
 UPLOAD_FOLDER = os.path.join(tempfile.gettempdir(), "pixel_art_uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024  # 1 GB
 
+# --- Palette Loader ---
 def load_palette(file_stream):
-    """Return a list of (R,G,B) tuples for image processing"""
     import re
     colors = []
     try:
@@ -30,10 +32,10 @@ def load_palette(file_stream):
             r = int(hex_rgb[0:2], 16)
             g = int(hex_rgb[2:4], 16)
             b = int(hex_rgb[4:6], 16)
-            colors.append((r, g, b))  # keep as tuple for apply_filter
+            colors.append((r, g, b))
     return colors
 
-
+# --- Palette Image for PIL quantize ---
 def make_palette_image(palette):
     palette_data = []
     for r, g, b in palette:
@@ -43,10 +45,11 @@ def make_palette_image(palette):
     pal_img.putpalette(palette_data)
     return pal_img
 
+# --- Apply filter ---
 def apply_filter(img, palette, use_dither=False, use_outlines=False):
     pal_img = make_palette_image(palette)
     dither_mode = Image.FLOYDSTEINBERG if use_dither else Image.NONE
-    
+
     result = img.convert("RGB").quantize(palette=pal_img, dither=dither_mode).convert("RGB")
 
     if use_outlines:
@@ -57,6 +60,12 @@ def apply_filter(img, palette, use_dither=False, use_outlines=False):
 
     return result
 
+# --- Serve uploaded images ---
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+# --- Main Route ---
 @app.route("/", methods=["GET", "POST"])
 def index():
     download_name = "filtered.png"
@@ -65,21 +74,20 @@ def index():
     preview_img_url = None
     result_img_url = None
 
-    # Prepare LUTs for gallery (hex colors for frontend)
+    # --- Load all LUTs for gallery ---
     lut_files = []
     for lut_file in os.listdir(LUTS_FOLDER):
         if lut_file.lower().endswith(".txt"):
             path = os.path.join(LUTS_FOLDER, lut_file)
             with open(path, "rb") as f:
-                palette_tuples = load_palette(f)  # list of (R,G,B)
+                palette_tuples = load_palette(f)
             if palette_tuples:
                 colors_hex = [f"#{r:02x}{g:02x}{b:02x}" for r, g, b in palette_tuples]
                 lut_files.append({
                     "name": lut_file,
                     "colors": colors_hex,
-                    "palette": palette_tuples  # keep tuple list if needed
+                    "palette": palette_tuples  # tuples for apply_filter
                 })
-
 
     if request.method == "POST":
         pixel_scale = float(request.form.get("pixel_scale", 100))
@@ -111,16 +119,16 @@ def index():
 
             # --- Load palette ---
             uploaded_palette = request.files.get("palette")
-            selected_lut = request.form.get("lut_select")
+            selected_lut_name = request.form.get("lut_select")
+            palette = None
 
             if uploaded_palette and uploaded_palette.filename != "":
                 palette = load_palette(uploaded_palette.stream)
-            elif selected_lut:
-                lut_path = os.path.join(LUTS_FOLDER, selected_lut)
-                with open(lut_path, "rb") as f:
-                    palette = load_palette(f)
-            else:
-                palette = None
+            elif selected_lut_name:
+                # Find the LUT from lut_files
+                selected_lut = next((l for l in lut_files if l["name"] == selected_lut_name), None)
+                if selected_lut:
+                    palette = selected_lut["palette"]
 
             if palette:
                 result = apply_filter(img, palette, use_dither=use_dither, use_outlines=use_outlines)
@@ -133,7 +141,7 @@ def index():
                 result = result.convert("RGB")
                 result.save(output_path, "JPEG", quality=90, progressive=True)
 
-                # --- Create thumbnail for preview ---
+                # --- Create preview thumbnail ---
                 preview = result.copy()
                 preview.thumbnail((512, 512), Image.LANCZOS)
                 preview_filename = f"{name}_filtered_preview.jpg"
