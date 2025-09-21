@@ -56,10 +56,11 @@
     <p><input type="submit" value="Apply Filter"></p>
   </form>
 
-  {% if result_img_b64 %}
+  {% if preview_img_url %}
     <h2>Filtered Result:</h2>
-    <img class="preview" src="data:image/png;base64,{{ result_img_b64 }}" alt="Filtered Image">
-    <p><a download="{{ download_name }}" href="data:image/png;base64,{{ result_img_b64 }}">Download Image</a></p>
+    <img class="preview" src="{{ preview_img_url }}" alt="Filtered Image">
+    <p><a download="{{ download_name }}" href="{{ result_img_url }}">Download Full Image</a></p>
   {% endif %}
+
 </body>
 </html>

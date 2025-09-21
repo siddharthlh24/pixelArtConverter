@@ -129,16 +129,28 @@ def index():
                 palette = None
 
             if palette:
-                # --- Apply filter ---
                 result = apply_filter(img, palette, use_dither=use_dither, use_outlines=use_outlines)
 
-                buf = io.BytesIO()
-                result.save(buf, format="PNG")
-                buf.seek(0)
-                result_img_b64 = base64.b64encode(buf.read()).decode("utf-8")
+                name, _ = os.path.splitext(original_filename)
+                output_filename = f"{name}_filtered.jpg"
+                output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
 
-                name, ext = os.path.splitext(original_filename)
-                download_name = f"{name}_filtered{ext}"
+                # Save full-resolution image
+                result = result.convert("RGB")
+                result.save(output_path, "JPEG", quality=90, progressive=True)
+
+                # --- Create thumbnail for preview ---
+                preview = result.copy()
+                preview.thumbnail((512, 512), Image.LANCZOS)  # max 512px
+                preview_filename = f"{name}_filtered_preview.jpg"
+                preview_path = os.path.join(app.config['UPLOAD_FOLDER'], preview_filename)
+                preview.save(preview_path, "JPEG", quality=70, progressive=True)
+
+                # URLs for template
+                result_img_url = url_for('uploaded_file', filename=output_filename)
+                preview_img_url = url_for('uploaded_file', filename=preview_filename)
+                download_name = output_filename
+
 
     return render_template(
         "index.html",
