@@ -11,7 +11,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024  # 1 GB
 
 def load_palette(file_stream):
-    """Load all colors from paint.net LUT file (.txt)"""
+    """Return a list of (R,G,B) tuples for image processing"""
     import re
     colors = []
     try:
@@ -25,11 +25,14 @@ def load_palette(file_stream):
         line = line.strip()
         if not line or line.startswith(";"):
             continue
-        # paint.net LUT lines are like FF42333c (alpha + RGB)
         if hex_pattern.match(line):
-            rgb = line[-6:]  # last 6 chars = RGB
-            colors.append(f"#{rgb.lower()}")
+            hex_rgb = line[-6:]  # last 6 chars = RGB
+            r = int(hex_rgb[0:2], 16)
+            g = int(hex_rgb[2:4], 16)
+            b = int(hex_rgb[4:6], 16)
+            colors.append((r, g, b))  # keep as tuple for apply_filter
     return colors
+
 
 def make_palette_image(palette):
     palette_data = []
@@ -62,15 +65,21 @@ def index():
     preview_img_url = None
     result_img_url = None
 
-    # --- Load all LUTs with full color arrays ---
+    # Prepare LUTs for gallery (hex colors for frontend)
     lut_files = []
     for lut_file in os.listdir(LUTS_FOLDER):
         if lut_file.lower().endswith(".txt"):
             path = os.path.join(LUTS_FOLDER, lut_file)
             with open(path, "rb") as f:
-                colors = load_palette(f)
-            if colors:
-                lut_files.append({"name": lut_file, "colors": colors})
+                palette_tuples = load_palette(f)  # list of (R,G,B)
+            if palette_tuples:
+                colors_hex = [f"#{r:02x}{g:02x}{b:02x}" for r, g, b in palette_tuples]
+                lut_files.append({
+                    "name": lut_file,
+                    "colors": colors_hex,
+                    "palette": palette_tuples  # keep tuple list if needed
+                })
+
 
     if request.method == "POST":
         pixel_scale = float(request.form.get("pixel_scale", 100))
