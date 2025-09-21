@@ -1,12 +1,10 @@
-version: "3.9"
 services:
   pixel-filter:
     build:
-      context: https://github.com/siddharthlh24/pixelArtConverter.git
+      context: https://github.com/siddharthlh24/pixelArtConverter.git#main  # specify branch
       dockerfile: Dockerfile
       args:
         TAG: latest
-    image: pixel-filter-webapp:latest
     ports:
       - "${HOST_PORT:-5000}:${CONTAINER_PORT:-5000}"
     environment:
