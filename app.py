@@ -8,20 +8,27 @@ LUTS_FOLDER = "./luts"
 
 # --- Palette Loader ---
 def load_palette(file_stream):
+    import re
     colors = []
     try:
         lines = file_stream.read().decode("utf-8").splitlines()
     except UnicodeDecodeError:
         file_stream.seek(0)
         lines = file_stream.read().decode("iso-8859-1").splitlines()
+    
+    hex_pattern = re.compile(r'[0-9A-Fa-f]{6}$')  # Only matches last 6 hex digits
+
     for line in lines:
         line = line.strip()
         if not line or line.startswith(";"):
             continue
         if line.startswith("FF") or line.startswith("#"):
             hex_color = line[-6:]
+            if not hex_pattern.match(hex_color):
+                continue  # skip invalid lines
             colors.append(tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4)))
     return colors
+
 
 # --- Palette Image for Pillow ---
 def make_palette_image(palette):
