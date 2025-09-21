@@ -1,21 +1,15 @@
-import os
-import tempfile
-from flask import Flask, request, render_template, send_from_directory
-from PIL import Image, ImageOps, ImageFilter
-import io, base64
+from flask import Flask, request, render_template, send_from_directory, url_for
+import os, tempfile
+from PIL import Image, ImageFilter
 
 app = Flask(__name__)
 
-# --- Folders ---
 LUTS_FOLDER = os.path.join(os.path.dirname(__file__), "luts")
 UPLOAD_FOLDER = os.path.join(tempfile.gettempdir(), "pixel_art_uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# --- Max upload size ---
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024  # 1 GB
 
-# --- Palette Loader ---
 def load_palette(file_stream):
     import re
     colors = []
@@ -37,7 +31,6 @@ def load_palette(file_stream):
             colors.append(tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4)))
     return colors
 
-# --- Palette Image ---
 def make_palette_image(palette):
     palette_data = []
     for r, g, b in palette:
@@ -47,49 +40,42 @@ def make_palette_image(palette):
     pal_img.putpalette(palette_data)
     return pal_img
 
-# --- Apply Filter ---
 def apply_filter(img, palette, use_dither=False, use_outlines=False):
     pal_img = make_palette_image(palette)
     dither_mode = Image.FLOYDSTEINBERG if use_dither else Image.NONE
     
-    # Quantize to palette
     result = img.convert("RGB").quantize(palette=pal_img, dither=dither_mode).convert("RGB")
 
     if use_outlines:
-        # --- Edge Detection ---
         edges = img.convert("L").filter(ImageFilter.FIND_EDGES)
-
-        # Threshold edges: lower → more lines, higher → fewer
         edges = edges.point(lambda x: 255 if x > 40 else 0, mode="1")
-
-        # Thicken lines for bold cartoon look
-        edges = edges.filter(ImageFilter.MaxFilter(3))  # 3 = thickness
-
-        # Paste black edges onto the result
+        edges = edges.filter(ImageFilter.MaxFilter(3))
         result.paste((0, 0, 0), mask=edges)
 
     return result
 
-
-# --- Serve stored images for preview ---
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-# --- Main Route ---
 @app.route("/", methods=["GET", "POST"])
 def index():
-    result_img_b64 = None
     download_name = "filtered.png"
-    lut_files = [f for f in os.listdir(LUTS_FOLDER) if f.lower().endswith(".txt")]
     img = None
     original_filename = None
+    preview_img_url = None
+    result_img_url = None
+
+    # --- Load all LUTs with full color arrays ---
+    lut_files = []
+    for lut_file in os.listdir(LUTS_FOLDER):
+        if lut_file.lower().endswith(".txt"):
+            lut_path = os.path.join(LUTS_FOLDER, lut_file)
+            with open(lut_path, "rb") as f:
+                palette = load_palette(f)
+            if palette:
+                colors = [f"#{r:02x}{g:02x}{b:02x}" for r, g, b in palette]
+                lut_files.append({"name": lut_file, "colors": colors})
 
     if request.method == "POST":
-        # Pixel scale 1-100%
         pixel_scale = float(request.form.get("pixel_scale", 100))
         scale_factor = max(min(pixel_scale, 100), 1) / 100.0
-
         use_dither = "dither" in request.form
         use_outlines = "outlines" in request.form
 
@@ -141,7 +127,7 @@ def index():
 
                 # --- Create thumbnail for preview ---
                 preview = result.copy()
-                preview.thumbnail((512, 512), Image.LANCZOS)  # max 512px
+                preview.thumbnail((512, 512), Image.LANCZOS)
                 preview_filename = f"{name}_filtered_preview.jpg"
                 preview_path = os.path.join(app.config['UPLOAD_FOLDER'], preview_filename)
                 preview.save(preview_path, "JPEG", quality=70, progressive=True)
@@ -151,11 +137,11 @@ def index():
                 preview_img_url = url_for('uploaded_file', filename=preview_filename)
                 download_name = output_filename
 
-
     return render_template(
         "index.html",
-        result_img_b64=result_img_b64,
         download_name=download_name,
         lut_files=lut_files,
-        stored_image=original_filename  # Pass filename for slider preview
+        stored_image=original_filename,
+        preview_img_url=preview_img_url,
+        result_img_url=result_img_url
     )

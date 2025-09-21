@@ -28,16 +28,38 @@
     {% endif %}
 
 
-    <p>
-      <label>Select LUT from folder:</label>
-      <select name="lut_select">
-        <option value="">-- none --</option>
-        {% for lut in lut_files %}
-          <option value="{{ lut }}" {% if request.form.get('lut_select') == lut %}selected{% endif %}>{{ lut }}</option>
-        {% endfor %}
-      </select>
-    </p>
+    <h3>Select LUT</h3>
+    <div id="lut_gallery" style="display:flex; flex-wrap:wrap; gap:10px;">
+      {% for lut in lut_files %}
+        <label class="lut-card" style="cursor:pointer; border:1px solid #ccc; padding:5px; display:flex; flex-direction:column; align-items:center; width:auto; max-width:150px;">
+          <!-- Hidden radio button -->
+          <input type="radio" name="lut_select" value="{{ lut.name }}"
+                style="display:none;"
+                {% if request.form.get('lut_select') == lut.name %}checked{% endif %}>
+          
+          <!-- Color row -->
+          <div class="color-row" style="display:flex; flex-wrap:wrap; gap:1px; justify-content:center; margin-bottom:5px; max-width:140px;">
+            {% for color in lut.colors %}
+              <div style="width:15px; height:15px; background:{{ color }}; border:1px solid #ccc;"></div>
+            {% endfor %}
+          </div>
 
+          <!-- LUT filename -->
+          <span style="font-size:12px; text-align:center; word-break:break-word;">{{ lut.name }}</span>
+        </label>
+      {% endfor %}
+    </div>
+
+<style>
+  /* Highlight selected LUT */
+  .lut-card input[type="radio"]:checked + .color-row {
+      outline: 2px solid #007bff;
+      outline-offset: 2px;
+  }
+  .lut-card:hover {
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+  }
+</style>
     <p>
       <label>Or upload your own LUT:</label>
       <input type="file" name="palette">
