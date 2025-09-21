@@ -1,9 +1,11 @@
 version: "3"
 services:
   pixel-filter:
-    image: pixel-filter-webapp:latest
+    image: pixel-filter-webapp:${TAG}
     build: .
     ports:
-      - "5000:5000"
+      - "${HOST_PORT}:${CONTAINER_PORT}"
     volumes:
-      - ./luts:/app/luts
+      - ./luts:${LUT_FOLDER}
+    environment:
+      - LUTS_FOLDER=${LUT_FOLDER}
