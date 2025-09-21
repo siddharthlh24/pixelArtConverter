@@ -11,6 +11,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024  # 1 GB
 
 def load_palette(file_stream):
+    """Load all colors from paint.net LUT file (.txt)"""
     import re
     colors = []
     try:
@@ -19,16 +20,15 @@ def load_palette(file_stream):
         file_stream.seek(0)
         lines = file_stream.read().decode("iso-8859-1").splitlines()
 
-    hex_pattern = re.compile(r'[0-9A-Fa-f]{6}$')
+    hex_pattern = re.compile(r'^[0-9A-Fa-f]{8}$')
     for line in lines:
         line = line.strip()
         if not line or line.startswith(";"):
             continue
-        if line.startswith("FF") or line.startswith("#"):
-            hex_color = line[-6:]
-            if not hex_pattern.match(hex_color):
-                continue
-            colors.append(tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4)))
+        # paint.net LUT lines are like FF42333c (alpha + RGB)
+        if hex_pattern.match(line):
+            rgb = line[-6:]  # last 6 chars = RGB
+            colors.append(f"#{rgb.lower()}")
     return colors
 
 def make_palette_image(palette):
@@ -66,11 +66,10 @@ def index():
     lut_files = []
     for lut_file in os.listdir(LUTS_FOLDER):
         if lut_file.lower().endswith(".txt"):
-            lut_path = os.path.join(LUTS_FOLDER, lut_file)
-            with open(lut_path, "rb") as f:
-                palette = load_palette(f)
-            if palette:
-                colors = [f"#{r:02x}{g:02x}{b:02x}" for r, g, b in palette]
+            path = os.path.join(LUTS_FOLDER, lut_file)
+            with open(path, "rb") as f:
+                colors = load_palette(f)
+            if colors:
                 lut_files.append({"name": lut_file, "colors": colors})
 
     if request.method == "POST":
