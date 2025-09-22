@@ -6,10 +6,13 @@ from PIL import Image, ImageFilter
 app = Flask(__name__)
 
 # --- Folders ---
+# --- Folders ---
 LUTS_FOLDER = os.path.join(os.path.dirname(__file__), "luts")
 UPLOAD_FOLDER = os.path.join(tempfile.gettempdir(), "pixel_art_uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# --- Max upload size ---
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024 * 1024  # 1 GB
 
 # --- Palette Loader ---

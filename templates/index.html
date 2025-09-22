@@ -9,13 +9,24 @@
     .preview { max-width: 100%; max-height: 60vh; object-fit: contain; border: 1px solid #ccc; margin-bottom: 10px; }
     input, select { width: 100%; max-width: 300px; margin-bottom: 10px; }
     label { display: block; margin-bottom: 5px; }
-    form { max-width: 400px; }
-    h1, h2 { margin-bottom: 10px; }
+    form { max-width: 600px; }
+    h1, h2, h3 { margin-bottom: 10px; }
+
+    /* LUT gallery styles */
+    #lut_gallery { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:15px; }
+    .lut-card { cursor:pointer; border:1px solid #ccc; padding:5px; display:flex; flex-direction:column; align-items:center; width:auto; max-width:150px; position:relative; }
+    .lut-card input[type="radio"] { position: absolute; left: -9999px; } /* hide radio button */
+    .color-row { display:flex; flex-wrap:wrap; gap:1px; justify-content:center; margin-bottom:5px; max-width:140px; }
+    .lut-card input[type="radio"]:checked ~ .color-row { outline: 2px solid #007bff; outline-offset: 2px; }
+    .lut-card:hover { box-shadow: 0 0 5px rgba(0,0,0,0.3); }
+
   </style>
 </head>
 <body>
   <h1>Pixel Filter</h1>
+
   <form method="post" enctype="multipart/form-data">
+    <!-- Image Upload -->
     <p>
       <label>Upload Image:</label>
       <input type="file" name="image">
@@ -27,57 +38,45 @@
       <img class="preview" src="/uploads/{{ stored_image }}" alt="Current Image">
     {% endif %}
 
-
+    <!-- LUT Gallery -->
     <h3>Select LUT</h3>
-    <div id="lut_gallery" style="display:flex; flex-wrap:wrap; gap:10px;">
+    <div id="lut_gallery">
       {% for lut in lut_files %}
-        <label class="lut-card" style="cursor:pointer; border:1px solid #ccc; padding:5px; display:flex; flex-direction:column; align-items:center; width:auto; max-width:150px;">
-          <!-- Hidden radio button -->
+        <label class="lut-card">
           <input type="radio" name="lut_select" value="{{ lut.name }}"
-                style="display:none;"
-                {% if request.form.get('lut_select') == lut.name %}checked{% endif %}>
-          
-          <!-- Color row -->
-          <div class="color-row" style="display:flex; flex-wrap:wrap; gap:1px; justify-content:center; margin-bottom:5px; max-width:140px;">
+                 {% if request.form.get('lut_select') == lut.name %}checked{% endif %}>
+          <div class="color-row">
             {% for color in lut.colors %}
               <div style="width:15px; height:15px; background:{{ color }}; border:1px solid #ccc;"></div>
             {% endfor %}
           </div>
-
-          <!-- LUT filename -->
           <span style="font-size:12px; text-align:center; word-break:break-word;">{{ lut.name }}</span>
         </label>
       {% endfor %}
     </div>
 
-<style>
-  /* Highlight selected LUT */
-  .lut-card input[type="radio"]:checked + .color-row {
-      outline: 2px solid #007bff;
-      outline-offset: 2px;
-  }
-  .lut-card:hover {
-      box-shadow: 0 0 5px rgba(0,0,0,0.3);
-  }
-</style>
+    <!-- Upload your own LUT -->
     <p>
       <label>Or upload your own LUT:</label>
       <input type="file" name="palette">
     </p>
 
+    <!-- Pixel Scale -->
     <p>
       <label>Pixel Scale (1–100%): <span id="scale_value">{{ request.form.pixel_scale if request.form.get('pixel_scale') else '100' }}</span>%</label>
       <input type="range" min="1" max="100" step="1" name="pixel_scale"
-            value="{{ request.form.pixel_scale if request.form.get('pixel_scale') else '100' }}"
-            id="pixel_scale_slider" oninput="document.getElementById('scale_value').innerText = this.value">
+             value="{{ request.form.pixel_scale if request.form.get('pixel_scale') else '100' }}"
+             id="pixel_scale_slider" oninput="document.getElementById('scale_value').innerText = this.value">
     </p>
 
+    <!-- Options -->
     <p><label><input type="checkbox" name="dither" {% if request.form.get('dither') %}checked{% endif %}> Use Dithering</label></p>
     <p><label><input type="checkbox" name="outlines" {% if request.form.get('outlines') %}checked{% endif %}> Hard Outlines</label></p>
 
     <p><input type="submit" value="Apply Filter"></p>
   </form>
 
+  <!-- Preview Result -->
   {% if preview_img_url %}
     <h2>Filtered Result:</h2>
     <img class="preview" src="{{ preview_img_url }}" alt="Filtered Image">
